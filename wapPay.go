@@ -1,5 +1,7 @@
 package alipay
 
+import "time"
+
 //手机订单
 type WapQuest struct {
 	Body               string  `json:"body,omitempty"`                 //对一笔交易的具体描述信息。如果是多种商品，请将商品描述字符串累加传给body。
@@ -28,6 +30,20 @@ func NewWapOrder(Subject, OutTradeNo string, TotalAmount float64) (*WapQuest) {
 		OutTradeNo:  OutTradeNo,
 		TotalAmount: TotalAmount,
 	}
+}
+
+/*
+参数修改方法
+返回值提供链式写法*/
+func (this *WapQuest) SetTimeExpire(unix int64) (*WapQuest) {
+	this.TimeExpire = time.Unix(unix, 0).Format("2006-01-02 15:04:05")
+	return this
+
+}
+func (this *WapQuest) SetBody(body string) (*WapQuest) {
+	this.Body = body
+	return this
+
 }
 
 //手机支付url
