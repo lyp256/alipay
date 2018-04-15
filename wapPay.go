@@ -1,4 +1,4 @@
-package main
+package alipay
 
 //手机订单
 type WapQuest struct {

@@ -1,4 +1,4 @@
-package main
+package alipay
 //
 func (this *Client) CloseOrser(closeQuest *CloseQuest) (string, error) {
 	return this.newQuest(closeQuest, "alipay.trade.close", "")

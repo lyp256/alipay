@@ -1,4 +1,4 @@
-package main
+package alipay
 
 import (
 	"crypto"
