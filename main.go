@@ -15,6 +15,8 @@ import (
 	"encoding/base64"
 	"time"
 	"net/url"
+	"regexp"
+	"fmt"
 )
 
 type SignType string
@@ -195,4 +197,44 @@ func Sign(src []byte, key *pem.Block, hash crypto.Hash) (string, error) {
 	b, err := rsa.SignPKCS1v15(rand.Reader, pri, hash, hashed)
 	en := base64.StdEncoding
 	return en.EncodeToString(b), nil
+}
+
+//验证签名
+func Verify(src, sign []byte, key *pem.Block, hash crypto.Hash) (error) {
+	var h = hash.New()
+	h.Write(src)
+	var hashed = h.Sum(nil)
+	var err error
+	var pub interface{}
+	pub, err = x509.ParsePKIXPublicKey(key.Bytes)
+	if err != nil {
+		return err
+	}
+	return rsa.VerifyPKCS1v15(pub.(*rsa.PublicKey), hash, hashed, sign)
+}
+
+//aliResponse验证
+func (this *Client) ValidAliResponse(body []byte, responseName string) (map[string]string, error) {
+	//使用正则表达式寻找内容
+	reg, err := regexp.Compile(`\{"` + responseName + `":(.+),"sign":"([a-zA-Z0-9/+=]+)"\}`)
+	if err != nil {
+		return nil, err
+	}
+	subs := reg.FindSubmatch(body)
+	fmt.Println(string(subs[1]))
+	signB := make([]byte, 2048)
+	i, err := base64.StdEncoding.Decode(signB, subs[2])
+	signB = signB[:i]
+	err = Verify(subs[1], signB, this.PubKEY, crypto.SHA256)
+	if err != nil {
+		return nil, err
+
+	}
+	//解析参数
+	params := make(map[string]string)
+	err = json.Unmarshal(subs[1], &params)
+	if err != nil {
+		return nil, err
+	}
+	return params, nil
 }
