@@ -1,5 +1,6 @@
 package alipay
 
+/*查询订单*/
 import (
 	"net/http"
 	"io/ioutil"

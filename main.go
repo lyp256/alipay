@@ -16,7 +16,6 @@ import (
 	"time"
 	"net/url"
 	"regexp"
-	"fmt"
 )
 
 type SignType string
@@ -26,6 +25,7 @@ const (
 	ST_RSA2 SignType = "RSA2"
 )
 
+// 应用客户端
 type Client struct {
 	PriKEY   *pem.Block //私钥
 	PubKEY   *pem.Block //公钥
@@ -70,9 +70,9 @@ func (this *Client) newQuest(quest interface{}, method, returnUrl string) (strin
 	PubParam.AppId = this.AppId
 	PubParam.ReturnUrl = returnUrl
 	PubParam.SignType = this.SignType
-
-	PubParam.Timestamp = time.Now().Format("2006-01-02 15:04:05") //接口时间
-	bc, err := json.Marshal(quest)                                //json Wap请求参数
+	l, _ := time.LoadLocation("")
+	PubParam.Timestamp = time.Now().In(l).Format("2006-01-02 15:04:05") //接口时间
+	bc, err := json.Marshal(quest)                                      //json Wap请求参数
 	if err != nil {
 		return "", nil
 	}
@@ -221,8 +221,7 @@ func (this *Client) ValidAliResponse(body []byte, responseName string) (map[stri
 		return nil, err
 	}
 	subs := reg.FindSubmatch(body)
-	fmt.Println(string(subs[1]))
-	signB := make([]byte, 2048)
+	signB := make([]byte, base64.StdEncoding.DecodedLen(len(subs[2])))
 	i, err := base64.StdEncoding.Decode(signB, subs[2])
 	signB = signB[:i]
 	err = Verify(subs[1], signB, this.PubKEY, crypto.SHA256)
