@@ -8,11 +8,13 @@ import (
 	"crypto"
 	"encoding/base64"
 	"fmt"
+	"net/http"
 )
 
 /*通知相关*/
+const success = "success"
 
-func (ali *Client) ValidateNotify(from url.Values) (error) {
+func (this *Client) ValidateNotify(from url.Values) (error) {
 
 	sign := from.Get("sign")
 	signType := from.Get("sign_type")
@@ -37,5 +39,11 @@ func (ali *Client) ValidateNotify(from url.Values) (error) {
 	if err != nil {
 		return err
 	}
-	return Verify([]byte(src), signbyte, ali.PubKEY, crypto.SHA256)
+	return Verify([]byte(src), signbyte, this.PubKEY, crypto.SHA256)
+}
+
+func NotIfySuccess(w http.ResponseWriter) (err error) {
+	_, err = w.Write([]byte(success))
+	return err
+
 }

@@ -16,6 +16,7 @@ import (
 	"time"
 	"net/url"
 	"regexp"
+	"fmt"
 )
 
 type SignType string
@@ -27,15 +28,19 @@ const (
 
 // 应用客户端
 type Client struct {
-	PriKEY   *pem.Block //私钥
-	PubKEY   *pem.Block //公钥
-	Gateway  string     //支付宝网关
-	SignType string     //签名类型
-	AppId    string     //app_ID
+	PriKEY       *pem.Block      //私钥pem
+	PubKEY       *pem.Block      //公钥pem
+	pubKey       *rsa.PublicKey  //公钥
+	priKey       *rsa.PrivateKey //私钥
+	Gateway      string          //支付宝网关
+	SignType     string          //签名类型
+	signTypeHash crypto.Hash     //签名使用hash类型
+	AppId        string          //app_ID
 }
 
 /*创建一个alipay 应用客户端*/
-func NewAlipay(pri, pub []byte, appid, gateway string, sigType SignType) (*Client, error) {
+func NewAlipay(pri, pub []byte, appid, gateway string, signType SignType) (*Client, error) {
+	var err error
 	if appid == "" {
 		return nil, errors.New("appid不能为空")
 	}
@@ -45,7 +50,12 @@ func NewAlipay(pri, pub []byte, appid, gateway string, sigType SignType) (*Clien
 	var c Client
 	c.Gateway = gateway
 	c.AppId = appid
-	c.SignType = string(sigType)
+	c.SignType = string(signType)
+	if c.SignType == "RSA2" {
+		c.signTypeHash = crypto.SHA256
+	} else {
+		c.signTypeHash = crypto.SHA1
+	}
 	c.PriKEY, _ = pem.Decode(pri)
 	if c.PriKEY == nil {
 		return nil, errors.New("私钥文件解析失败")
@@ -55,9 +65,20 @@ func NewAlipay(pri, pub []byte, appid, gateway string, sigType SignType) (*Clien
 		return nil, errors.New("公钥钥文件解析失败")
 	}
 
+	rsapub, err := x509.ParsePKIXPublicKey(c.PubKEY.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	c.pubKey = rsapub.(*rsa.PublicKey)
+	c.priKey, err = x509.ParsePKCS1PrivateKey(c.PriKEY.Bytes)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
 	return &c, nil
 }
 
+//创建请求 内部通用方法
 func (this *Client) newQuest(quest interface{}, method, returnUrl string) (string, error) {
 	if quest == nil {
 		return "", errors.New("请求参数不能为空")
@@ -68,6 +89,7 @@ func (this *Client) newQuest(quest interface{}, method, returnUrl string) (strin
 	PubParam.Version = "1.0"   //接口版本
 	PubParam.Method = method   //接口方法
 	PubParam.AppId = this.AppId
+	PubParam.NotifyUrl = "http://d.lyp256.cn"
 	PubParam.ReturnUrl = returnUrl
 	PubParam.SignType = this.SignType
 	l, _ := time.LoadLocation("")
@@ -84,11 +106,8 @@ func (this *Client) newQuest(quest interface{}, method, returnUrl string) (strin
 	paramsToStrings(&params, PubParam)
 
 	src := strings.Join(params, "&") //拼接字符串
-	if (this.SignType == "RSA2") {
-		PubParam.Sign, err = Sign([]byte(src), this.PriKEY, crypto.SHA256)
-	} else {
-		PubParam.Sign, err = Sign([]byte(src), this.PriKEY, crypto.SHA1)
-	}
+
+	PubParam.Sign, err = this.Sign([]byte(src))
 	if err != nil {
 		return "", errors.New("签名失败")
 	}
@@ -199,6 +218,19 @@ func Sign(src []byte, key *pem.Block, hash crypto.Hash) (string, error) {
 	return en.EncodeToString(b), nil
 }
 
+//基于客户端的签名
+func (this *Client) Sign(src []byte) (string, error) {
+	var h = this.signTypeHash.New()
+	h.Write(src)
+	var hashed = h.Sum(nil)
+	b, err := rsa.SignPKCS1v15(rand.Reader, this.priKey, this.signTypeHash, hashed)
+	if err != nil {
+		return "", err
+	}
+	en := base64.StdEncoding
+	return en.EncodeToString(b), nil
+}
+
 //验证签名
 func Verify(src, sign []byte, key *pem.Block, hash crypto.Hash) (error) {
 	var h = hash.New()
@@ -213,6 +245,19 @@ func Verify(src, sign []byte, key *pem.Block, hash crypto.Hash) (error) {
 	return rsa.VerifyPKCS1v15(pub.(*rsa.PublicKey), hash, hashed, sign)
 }
 
+//基于客户端的验证
+func (this *Client) Verify(src, sign []byte) (error) {
+
+	var h = this.signTypeHash.New()
+	h.Write(src)
+	var hashed = h.Sum(nil)
+	var err error
+	if err != nil {
+		return err
+	}
+	return rsa.VerifyPKCS1v15(this.pubKey, this.signTypeHash, hashed, sign)
+}
+
 //aliResponse验证
 func (this *Client) ValidAliResponse(body []byte, responseName string) (map[string]string, error) {
 	//使用正则表达式寻找内容
@@ -224,10 +269,9 @@ func (this *Client) ValidAliResponse(body []byte, responseName string) (map[stri
 	signB := make([]byte, base64.StdEncoding.DecodedLen(len(subs[2])))
 	i, err := base64.StdEncoding.Decode(signB, subs[2])
 	signB = signB[:i]
-	err = Verify(subs[1], signB, this.PubKEY, crypto.SHA256)
+	err = this.Verify(subs[1], signB)
 	if err != nil {
 		return nil, err
-
 	}
 	//解析参数
 	params := make(map[string]string)
