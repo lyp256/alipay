@@ -7,7 +7,6 @@ import (
 	"errors"
 	"crypto"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 )
 
@@ -32,10 +31,6 @@ func (this *Client) ValidateNotify(from url.Values) (error) {
 	sort.Strings(params)
 	src := strings.Join(params, "&")
 	signbyte, err := base64.StdEncoding.DecodeString(sign)
-	fmt.Println(signbyte)
-	fmt.Println(sign)
-	fmt.Println(signType)
-	fmt.Println(src)
 	if err != nil {
 		return err
 	}

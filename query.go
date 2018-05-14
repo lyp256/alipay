@@ -24,13 +24,13 @@ func NewQueryQuest(OutTradeNo, TradeNo string) (*QueryQuest) {
 }
 
 //返回订单查询的url
-func (this *Client) QueryOrder(query *QueryQuest) (string, error) {
-	return this.newQuest(query, "alipay.trade.query", "")
+func (this *Client) QueryOrder(query *QueryQuest) (*alquest) {
+	return this.newQuest(query, "alipay.trade.query")
 }
 
 //返回查询的结果
 func (this *Client) QueryOrderParams(query *QueryQuest) (map[string]string, error) {
-	url, err := this.QueryOrder(query)
+	url, err := this.QueryOrder(query).Build()
 	if err != nil {
 		return nil, err
 	}

@@ -47,6 +47,6 @@ func (this *WapQuest) SetBody(body string) (*WapQuest) {
 }
 
 //手机支付url
-func (this *Client) WapPay(wapQuest *WapQuest, returnUrl string) (string, error) {
-	return this.newQuest(wapQuest, "alipay.trade.wap.pay", returnUrl)
+func (this *Client) WapPay(wapQuest *WapQuest) (*alquest) {
+	return this.newQuest(wapQuest, "alipay.trade.wap.pay")
 }

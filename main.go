@@ -36,6 +36,7 @@ type Client struct {
 	SignType     string          //签名类型
 	signTypeHash crypto.Hash     //签名使用hash类型
 	AppId        string          //app_ID
+	basePubParam *alPublic       //默认通用公共参数
 }
 
 /*创建一个alipay 应用客户端*/
@@ -75,58 +76,123 @@ func NewAlipay(pri, pub []byte, appid, gateway string, signType SignType) (*Clie
 		fmt.Println(err)
 		return nil, err
 	}
+	c.basePubParam = &alPublic{
+		Version: "1.0",
+		Charset: "utf-8",
+	}
 	return &c, nil
 }
 
+//设置默认异步通知url
+func (this *Client) SetNotifyUrl(url string) (*Client) {
+	this.basePubParam.NotifyUrl = url
+	return this
+}
+
+//设置默认返回url
+func (this *Client) SetReturnUrl(url string) (*Client) {
+	this.basePubParam.ReturnUrl = url
+	return this
+}
+
+type alquest struct {
+	pubParam alPublic    //公共参数
+	bizParam interface{} //业务参数
+	c        *Client     //客户端
+}
+
 //创建请求 内部通用方法
-func (this *Client) newQuest(quest interface{}, method, returnUrl string) (string, error) {
+func (this *Client) newQuest(quest interface{}, method string) (*alquest) {
 	if quest == nil {
-		return "", errors.New("请求参数不能为空")
+		return nil
 	}
-	var err error
-	var PubParam alPublic
-	PubParam.Charset = "utf-8" //请求字符集
-	PubParam.Version = "1.0"   //接口版本
-	PubParam.Method = method   //接口方法
-	PubParam.AppId = this.AppId
-	PubParam.NotifyUrl = "http://d.lyp256.cn"
-	PubParam.ReturnUrl = returnUrl
-	PubParam.SignType = this.SignType
-	l, _ := time.LoadLocation("")
-	PubParam.Timestamp = time.Now().In(l).Format("2006-01-02 15:04:05") //接口时间
-	bc, err := json.Marshal(quest)                                      //json Wap请求参数
+	var q alquest
+	q.c = this
+	q.bizParam = quest
+	q.pubParam.Charset = this.basePubParam.Charset     //请求字符集
+	q.pubParam.Version = this.basePubParam.Version     //接口版本
+	q.pubParam.Method = method                         //接口方法
+	q.pubParam.AppId = this.AppId                      //appid
+	q.pubParam.NotifyUrl = this.basePubParam.NotifyUrl //异步通知地址
+	q.pubParam.ReturnUrl = this.basePubParam.ReturnUrl //返回地址
+	q.pubParam.SignType = this.SignType
+	return &q
+}
+
+//设置异步通知地址
+func (this *alquest) SetNotifyUrl(url string) (*alquest) {
+	this.pubParam.NotifyUrl = url
+	return this
+}
+
+//设置返回地址
+func (this *alquest) SetReturnUrl(url string) (*alquest) {
+	this.pubParam.ReturnUrl = url
+	return this
+}
+
+//设置Timestamp 此字段为请求发送时间
+//如非必要请不要调用此方法.此方法未调用
+// 时Timestamp会在在Build()方法调用
+// 时自动生成,调用此方法后Build()方法
+// 会保留此方法设置的Timestamp
+
+func (this *alquest) SetTimestamp(t time.Time) (*alquest) {
+	location, _ := time.LoadLocation("Asia/Shanghai")
+	this.pubParam.Timestamp = t.In(location).Format("2006-01-02 15:04:05")
+	return this
+}
+
+/*其他字段为固定值 暂时未提供修改方法*/
+
+//创建请求 内部通用方法
+
+func (this *alquest) Build() (string, error) {
+	if this.bizParam == nil {
+		return "", errors.New("请求业务参数不能为空")
+	}
+	if this.bizParam == nil {
+		return "", errors.New("请求业务参数不能为空")
+	}
+	if this.pubParam.Timestamp=="" {
+		this.SetTimestamp(time.Now())
+	}
+
+	bc, err := json.Marshal(this.bizParam)                                      //json Wap请求参数
 	if err != nil {
 		return "", nil
 	}
 
-	PubParam.BizContent = string(bc)
+	this.pubParam.BizContent = string(bc)
 
-	params := make([]string, 30)[0:0]
+	params := make([]string, 11)[0:0]
 
-	paramsToStrings(&params, PubParam)
+	paramsToStrings(&params, this.pubParam)
 
 	src := strings.Join(params, "&") //拼接字符串
 
-	PubParam.Sign, err = this.Sign([]byte(src))
+	this.pubParam.Sign, err = this.c.Sign([]byte(src))
 	if err != nil {
 		return "", errors.New("签名失败")
 	}
-	//对签名结果进行urlencode
+	/*//对签名结果进行urlencode
 	var v url.Values
 	v = make(map[string][]string)
-	v.Set("sign", PubParam.Sign)
+	v.Set("sign", this.pubParam.Sign)
 	//组装参数
-	src += "&" + v.Encode()
+	src += "&" + v.Encode()*/
 	//参数urlencode并返回组装完成的url返回结果
-	return this.Gateway + "?" + PubParam.build().Encode(), err
+	return this.c.Gateway + "?" + this.pubParam.build().Encode(), err
 }
+
+//其他参数目前均未固定值  暂未提供修改方法
 
 //请求公共参数
 type alPublic struct {
 	AppId      string `json:"app_id"`               //支付宝分配给开发者的应用ID
 	Method     string `json:"method"`               //接口名称
 	Format     string `json:"format,omitempty"`     //仅支持JSON
-	ReturnUrl  string `json:"return_url,omitempty"` //HTTP/HTTPS开头字符串
+	ReturnUrl  string `json:"return_url,omitempty"` //付款成功返回地址 HTTP/HTTPS开头字符串
 	Charset    string `json:"charset"`              //请求使用的编码格式，如utf-8,gbk,gb2312等
 	SignType   string `json:"sign_type"`            //商户生成签名字符串所使用的签名算法类型，目前支持RSA2和RSA，推荐使用RSA2
 	Sign       string `json:"sign"`                 //商户请求参数的签名串，详见签名
@@ -231,7 +297,7 @@ func (this *Client) Sign(src []byte) (string, error) {
 	return en.EncodeToString(b), nil
 }
 
-//验证签名
+//验证签名 供外部使用
 func Verify(src, sign []byte, key *pem.Block, hash crypto.Hash) (error) {
 	var h = hash.New()
 	h.Write(src)
@@ -258,7 +324,7 @@ func (this *Client) Verify(src, sign []byte) (error) {
 	return rsa.VerifyPKCS1v15(this.pubKey, this.signTypeHash, hashed, sign)
 }
 
-//aliResponse验证
+//aliResponse验证签名
 func (this *Client) ValidAliResponse(body []byte, responseName string) (map[string]string, error) {
 	//使用正则表达式寻找内容
 	reg, err := regexp.Compile(`\{"` + responseName + `":(.+),"sign":"([a-zA-Z0-9/+=]+)"\}`)

@@ -1,7 +1,7 @@
 package alipay
 //
-func (this *Client) CloseOrser(closeQuest *CloseQuest) (string, error) {
-	return this.newQuest(closeQuest, "alipay.trade.close", "")
+func (this *Client) CloseOrser(closeQuest *CloseQuest) (*alquest) {
+	return this.newQuest(closeQuest, "alipay.trade.close")
 }
 /*关闭订单请求*/
 type CloseQuest struct {
