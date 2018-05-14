@@ -12,7 +12,7 @@ type QueryQuest struct {
 }
 
 /*trade_no,out_trade_no如果同时存在优先取trade_no 详情见https://docs.open.alipay.com/api_1/alipay.trade.query*/
-func NewQueryQuest(OutTradeNo, TradeNo string) (*QueryQuest) {
+func NewQuery(OutTradeNo, TradeNo string) (*QueryQuest) {
 	if OutTradeNo == "" && TradeNo == "" {
 		return nil
 	}
@@ -35,6 +35,7 @@ func (this *Client) QueryOrderParams(query *QueryQuest) (map[string]string, erro
 		return nil, err
 	}
 	resp, err := http.Get(url)
+	resp.Body.Close()
 	if err != nil {
 		return nil, err
 	}

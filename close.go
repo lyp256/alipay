@@ -1,6 +1,12 @@
 package alipay
+
+import (
+	"net/http"
+	"io/ioutil"
+)
+
 //
-func (this *Client) CloseOrser(closeQuest *CloseQuest) (*alquest) {
+func (this *Client) CloseOrder(closeQuest *CloseQuest) (*alquest) {
 	return this.newQuest(closeQuest, "alipay.trade.close")
 }
 /*关闭订单请求*/
@@ -10,7 +16,7 @@ type CloseQuest struct {
 	OperatorId string `json:"operator_id,omitempty"`  //自定义操作员id
 }
 
-func NewCloseQuest(OutTradeNo, TradeNo, OperatorId string) (quest *CloseQuest) {
+func NewClose(OutTradeNo, TradeNo, OperatorId string) (quest *CloseQuest) {
 	if OutTradeNo == "" && TradeNo == "" {
 		return nil
 	}
@@ -20,4 +26,20 @@ func NewCloseQuest(OutTradeNo, TradeNo, OperatorId string) (quest *CloseQuest) {
 		OperatorId: OperatorId,
 	}
 
+}
+func (this *Client) CloseOrderParams(close *CloseQuest) (map[string]string, error) {
+	url, err := this.CloseOrder(close).Build()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	return this.ValidAliResponse(body, "alipay_trade_close_response")
 }
