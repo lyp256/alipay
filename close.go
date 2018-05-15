@@ -1,8 +1,6 @@
 package alipay
 
 import (
-	"net/http"
-	"io/ioutil"
 	"errors"
 )
 
@@ -28,22 +26,15 @@ func NewClose(OutTradeNo, TradeNo, OperatorId string) (*CloseQuest,error) {
 	},nil
 
 }
+//创建请求
 func (this *Client) CloseOrser(re *CloseQuest) (*alquest) {
 	return this.newQuest(re, "alipay.trade.close")
 }
+//发送同步请求,获取结果
 func (this *Client) CloseOrderParams(close *CloseQuest) (map[string]string, error) {
 	url, err := this.CloseOrder(close).Build()
 	if err != nil {
 		return nil, err
 	}
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	return this.ValidAliResponse(body, "alipay_trade_close_response")
+	return  this.httpQuest(url,"alipay_trade_close_response")
 }

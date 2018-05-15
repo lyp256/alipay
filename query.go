@@ -2,8 +2,6 @@ package alipay
 
 /*查询订单*/
 import (
-	"net/http"
-	"io/ioutil"
 	"errors"
 )
 
@@ -35,14 +33,5 @@ func (this *Client) QueryOrderParams(query *QueryQuest) (map[string]string, erro
 	if err != nil {
 		return nil, err
 	}
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	return this.ValidAliResponse(body, "alipay_trade_query_response")
+	return  this.httpQuest(url,"alipay_trade_query_response")
 }

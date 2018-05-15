@@ -17,6 +17,8 @@ import (
 	"net/url"
 	"regexp"
 	"fmt"
+	"net/http"
+	"io/ioutil"
 )
 
 type SignType string
@@ -199,6 +201,7 @@ type alPublic struct {
 	Timestamp  string `json:"timestamp"`            //发送请求的时间，格式"yyyy-MM-dd HH:mm:ss"
 	Version    string `json:"version"`              //调用的接口版本，固定为：1.0
 	NotifyUrl  string `json:"notify_url,omitempty"` //支付宝服务器主动通知商户服务器里指定的页面http/https路径。
+	AppAuthToken string `json:"app_auth_token,omitempty"` //第三方应用授权
 	BizContent string `json:"biz_content"`          //业务请求参数的集合，最大长度不限，除公共参数外所有请求参数都必须放在这个参数中传递，具体参照各产品快速接入文档
 }
 
@@ -346,4 +349,18 @@ func (this *Client) ValidAliResponse(body []byte, responseName string) (map[stri
 		return nil, err
 	}
 	return params, nil
+}
+
+//发送同步请求,获取结果
+func (this *Client) httpQuest(url,respName string) (map[string]string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	return this.ValidAliResponse(body, respName)
 }

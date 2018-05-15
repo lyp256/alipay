@@ -3,8 +3,6 @@ package alipay
 import (
 	"errors"
 	"time"
-	"net/http"
-	"io/ioutil"
 )
 
 /*账单*/
@@ -34,14 +32,5 @@ func (this *Client) BillDownParams(bill *BillDown) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	return this.ValidAliResponse(body, "alipay_data_dataservice_bill_downloadurl_query_response")
+	return  this.httpQuest(url,"alipay_data_dataservice_bill_downloadurl_query_response")
 }
