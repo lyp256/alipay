@@ -4,6 +4,7 @@ package alipay
 import (
 	"net/http"
 	"io/ioutil"
+	"errors"
 )
 
 type QueryQuest struct {
@@ -12,14 +13,14 @@ type QueryQuest struct {
 }
 
 /*trade_no,out_trade_no如果同时存在优先取trade_no 详情见https://docs.open.alipay.com/api_1/alipay.trade.query*/
-func NewQuery(OutTradeNo, TradeNo string) (*QueryQuest) {
+func NewQuery(OutTradeNo, TradeNo string) (*QueryQuest,error) {
 	if OutTradeNo == "" && TradeNo == "" {
-		return nil
+		return nil,errors.New("OutTradeNo和TradeNo不能同时为空")
 	}
 	return &QueryQuest{
 		OutTradeNo: OutTradeNo,
 		TradeNo:    TradeNo,
-	}
+	},nil
 
 }
 
@@ -35,11 +36,11 @@ func (this *Client) QueryOrderParams(query *QueryQuest) (map[string]string, erro
 		return nil, err
 	}
 	resp, err := http.Get(url)
-	resp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 	if err != nil {
 		return nil, err
 	}

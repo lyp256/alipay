@@ -1,6 +1,9 @@
 package alipay
 
-import "time"
+import (
+	"time"
+	"errors"
+)
 
 //手机订单
 type WapQuest struct {
@@ -24,12 +27,18 @@ type WapQuest struct {
 }
 
 /*创建一个wap订单请求*/
-func NewWapOrder(Subject, OutTradeNo string, TotalAmount float64) (*WapQuest) {
+func NewWapOrder(Subject, OutTradeNo string, TotalAmount float64) (*WapQuest,error) {
+	if Subject=="" {
+		return nil,errors.New("Subject不能为空")
+	}
+	if OutTradeNo=="" {
+		return nil,errors.New("OutTradeNo不能为空")
+	}
 	return &WapQuest{
 		Subject:     Subject,
 		OutTradeNo:  OutTradeNo,
 		TotalAmount: TotalAmount,
-	}
+	},nil
 }
 
 /*

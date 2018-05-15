@@ -3,6 +3,7 @@ package alipay
 import (
 	"net/http"
 	"io/ioutil"
+	"errors"
 )
 
 /*退款接口*/
@@ -34,12 +35,17 @@ type Refunnd struct {
 }
 
 //创建一个退款
-func NewRefunnd(outNo, NO string, RefundAmount float64) (*Refunnd) {
+func NewRefunnd(outNo, NO string, RefundAmount float64) (*Refunnd,error) {
+	if outNo==""&&NO=="" {
+		return nil,errors.New("OutNo和No不能同时为空")
+	}
+
+
 	return &Refunnd{
 		OutTradeNo:   outNo,
 		TradeNo:      NO,
 		RefundAmount: RefundAmount,
-	}
+	},nil
 }
 
 //设置退款币种

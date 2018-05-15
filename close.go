@@ -3,6 +3,7 @@ package alipay
 import (
 	"net/http"
 	"io/ioutil"
+	"errors"
 )
 
 //
@@ -16,16 +17,19 @@ type CloseQuest struct {
 	OperatorId string `json:"operator_id,omitempty"`  //自定义操作员id
 }
 
-func NewClose(OutTradeNo, TradeNo, OperatorId string) (quest *CloseQuest) {
+func NewClose(OutTradeNo, TradeNo, OperatorId string) (*CloseQuest,error) {
 	if OutTradeNo == "" && TradeNo == "" {
-		return nil
+		return nil,errors.New("OutTradeNo和TradeNo不能同时为空")
 	}
 	return &CloseQuest{
 		OutTradeNo: OutTradeNo,
 		TradeNo:    TradeNo,
 		OperatorId: OperatorId,
-	}
+	},nil
 
+}
+func (this *Client) CloseOrser(re *CloseQuest) (*alquest) {
+	return this.newQuest(re, "alipay.trade.close")
 }
 func (this *Client) CloseOrderParams(close *CloseQuest) (map[string]string, error) {
 	url, err := this.CloseOrder(close).Build()
