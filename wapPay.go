@@ -27,18 +27,18 @@ type WapQuest struct {
 }
 
 /*创建一个wap订单请求*/
-func NewWapOrder(Subject, OutTradeNo string, TotalAmount float64) (*WapQuest,error) {
-	if Subject=="" {
-		return nil,errors.New("Subject不能为空")
+func NewWap(OutTradeNo,Subject  string, TotalAmount float64) (*WapQuest, error) {
+	if Subject == "" {
+		return nil, errors.New("Subject不能为空")
 	}
-	if OutTradeNo=="" {
-		return nil,errors.New("OutTradeNo不能为空")
+	if OutTradeNo == "" {
+		return nil, errors.New("OutTradeNo不能为空")
 	}
 	return &WapQuest{
 		Subject:     Subject,
 		OutTradeNo:  OutTradeNo,
 		TotalAmount: TotalAmount,
-	},nil
+	}, nil
 }
 
 /*

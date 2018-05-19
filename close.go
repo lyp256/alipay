@@ -4,10 +4,6 @@ import (
 	"errors"
 )
 
-//
-func (this *Client) CloseOrder(closeQuest *CloseQuest) (*alquest) {
-	return this.newQuest(closeQuest, "alipay.trade.close")
-}
 /*关闭订单请求*/
 type CloseQuest struct {
 	OutTradeNo string `json:"out_trade_no,omitempty"` //订单支付时传入的商户订单号,和支付宝交易号不能同时为空。
@@ -27,7 +23,7 @@ func NewClose(OutTradeNo, TradeNo, OperatorId string) (*CloseQuest,error) {
 
 }
 //创建请求
-func (this *Client) CloseOrser(re *CloseQuest) (*alquest) {
+func (this *Client) CloseOrder(re *CloseQuest) (*alquest) {
 	return this.newQuest(re, "alipay.trade.close")
 }
 //发送同步请求,获取结果

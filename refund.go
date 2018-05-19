@@ -33,17 +33,16 @@ type Refunnd struct {
 }
 
 //创建一个退款
-func NewRefunnd(outNo, NO string, RefundAmount float64) (*Refunnd,error) {
-	if outNo==""&&NO=="" {
-		return nil,errors.New("OutNo和No不能同时为空")
+func NewRefunnd(outNo, NO string, RefundAmount float64) (*Refunnd, error) {
+	if outNo == "" && NO == "" {
+		return nil, errors.New("OutNo和No不能同时为空")
 	}
-
 
 	return &Refunnd{
 		OutTradeNo:   outNo,
 		TradeNo:      NO,
 		RefundAmount: RefundAmount,
-	},nil
+	}, nil
 }
 
 //设置退款币种
@@ -104,5 +103,33 @@ func (this *Client) RefundParams(re *Refunnd) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return  this.httpQuest(url,"alipay_trade_refund_response")
+	return this.httpQuest(url, "alipay_trade_refund_response")
+}
+
+/*查询退款*/
+type QueryRefund struct {
+	TradeNo      string `json:"trade_no,omitempty"`     //支付宝交易号，和商户订单号不能同时为空
+	OutTradeNo   string `json:"out_trade_no,omitempty"` //订单支付时传入的商户订单号,和支付宝交易号不能同时为空。 trade_no,out_trade_no如果同时存在优先取trade_no
+	OutRequestNo string `json:"out_request_no"`         //请求退款接口时，传入的退款请求号，如果在退款请求时未传入，则该值为创建交易时的外部交易号
+}
+
+/*交易退款查询*/
+func NewQueryRefund(OutTradeNo,TradeNo,OutRequestNo string) (*QueryRefund, error) {
+	if TradeNo == "" && OutTradeNo == "" {
+		return nil, errors.New("TradeNo和OutTradeNo不能同时为空")
+	}
+	if OutRequestNo == "" {
+		return nil, errors.New("OutRequestNo不能为空")
+
+	}
+	return &QueryRefund{
+		TradeNo:      TradeNo,
+		OutTradeNo:   OutTradeNo,
+		OutRequestNo: OutRequestNo,
+	}, nil
+}
+
+//交易退款查询
+func (this *Client) QueryRefund(query *QueryRefund) (*alquest) {
+	return this.newQuest(query, "alipay.trade.fastpay.refund.query")
 }
