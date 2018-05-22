@@ -27,7 +27,7 @@ type WapQuest struct {
 }
 
 /*创建一个wap订单请求*/
-func NewWap(OutTradeNo,Subject  string, TotalAmount float64) (*WapQuest, error) {
+func NewWapPay(OutTradeNo,Subject  string, TotalAmount float64) (*WapQuest, error) {
 	if Subject == "" {
 		return nil, errors.New("Subject不能为空")
 	}
