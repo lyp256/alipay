@@ -6,115 +6,133 @@ import (
 
 /*退款接口*/
 
-//商品形象
+// Goods 商品形象
 type Goods struct {
-	GoodsId       string  `json:"goods_id"`                  //商品的编号
-	AlipayGoodsId string  `json:"alipay_goods_id,omitempty"` //支付宝定义的统一商品编号	20010001
-	GoodsName     string  `json:"goods_name"`                //256	商品名称
-	Quantity      int     `json:"quantity"`                  //10	商品数量	1
-	Price         float64 `json:"price"`                     //9 商品单价，单位为元	2000
-	GoodsCategory string  `json:"goods_category,omitempty"`  //24	商品类目	34543238
-	Body          string  `json:"body,omitempty"`            //1000 商品描述信息	特价手机
-	ShowUrl       string  `json:"show_url,omitempty"`        //400	商品的展示地址	http://www.alipay.com/xxx.jpg
+	// 商品的编号
+	GoodsId string `json:"goods_id"`
+	// 支付宝定义的统一商品编号	20010001
+	AlipayGoodsId string `json:"alipay_goods_id,omitempty"`
+	// 256	商品名称
+	GoodsName string `json:"goods_name"`
+	// 10	商品数量	1
+	Quantity int `json:"quantity"`
+	// 9 商品单价，单位为元	2000
+	Price float64 `json:"price"`
+	// 24	商品类目	34543238
+	GoodsCategory string `json:"goods_category,omitempty"`
+	// 1000 商品描述信息	特价手机
+	Body string `json:"body,omitempty"`
+	// 400	商品的展示地址	http://www.alipay.com/xxx.jpg
+	ShowUrl string `json:"show_url,omitempty"`
 }
 
-//退款
-type Refunnd struct {
-	OutTradeNo     string   `json:"out_trade_no,omitempty"`    //订单支付时传入的商户订单号,不能和 trade_no同时为空。
-	TradeNo        string   `json:"trade_no,omitempty"`        //支付宝交易号，和商户订单号不能同时为空
-	RefundAmount   float64  `json:"refund_amount"`             //需要退款的金额，该金额不能大于订单金额,单位为元，支持两位小数
-	RefundCurrency string   `json:"refund_currency,omitempty"` //订单退款币种信息，非外币交易，不能传入退款币种信息
-	RefundReason   string   `json:"refund_reason,omitempty"`   //退款的原因说明
-	OutRequestNo   string   `json:"out_request_no,omitempty"`  //标识一次退款请求，同一笔交易多次退款需要保证唯一，如需部分退款，则此参数必传。
-	OperatorId     string   `json:"operator_id,omitempty"`     //商户的操作员编号
-	StoreId        string   `json:"store_id,omitempty"`        //商户的门店编号
-	TerminalId     string   `json:"terminal_id,omitempty"`     //商户的终端编号
-	GoodsDetail    []*Goods `json:"goods_detail,omitempty"`    //退款包含的商品列表信息，Json格式。
+// Refund 退款
+type Refund struct {
+	// 订单支付时传入的商户订单号,不能和 trade_no同时为空。
+	OutTradeNo string `json:"out_trade_no,omitempty"`
+	// 支付宝交易号，和商户订单号不能同时为空
+	TradeNo string `json:"trade_no,omitempty"`
+	// 需要退款的金额，该金额不能大于订单金额,单位为元，支持两位小数
+	RefundAmount float64 `json:"refund_amount"`
+	// 订单退款币种信息，非外币交易，不能传入退款币种信息
+	RefundCurrency string `json:"refund_currency,omitempty"`
+	// 退款的原因说明
+	RefundReason string `json:"refund_reason,omitempty"`
+	// 标识一次退款请求，同一笔交易多次退款需要保证唯一，如需部分退款，则此参数必传。
+	OutRequestNo string `json:"out_request_no,omitempty"`
+	// 商户的操作员编号
+	OperatorId string `json:"operator_id,omitempty"`
+	// 商户的门店编号
+	StoreId string `json:"store_id,omitempty"`
+	// 商户的终端编号
+	TerminalId string `json:"terminal_id,omitempty"`
+	// 退款包含的商品列表信息，Json格式。
+	GoodsDetail []*Goods `json:"goods_detail,omitempty"`
 }
 
-//创建一个退款
-func NewRefunnd(outNo, NO string, RefundAmount float64) (*Refunnd, error) {
+// NewRefund 创建一个退款
+func NewRefund(outNo, NO string, RefundAmount float64) (*Refund, error) {
 	if outNo == "" && NO == "" {
 		return nil, errors.New("OutNo和No不能同时为空")
 	}
 
-	return &Refunnd{
+	return &Refund{
 		OutTradeNo:   outNo,
 		TradeNo:      NO,
 		RefundAmount: RefundAmount,
 	}, nil
 }
 
-//设置退款币种
-func (this *Refunnd) SetRefundCurrency(Currency string) (*Refunnd) {
-	this.RefundCurrency = Currency
-	return this
+// SetRefundCurrency 设置退款币种
+func (r *Refund) SetRefundCurrency(Currency string) *Refund {
+	r.RefundCurrency = Currency
+	return r
 }
 
-//设置退款说明
-func (this *Refunnd) SetRefundReason(Reason string) (*Refunnd) {
-	this.RefundReason = Reason
-	return this
+// SetRefundReason 设置退款说明
+func (r *Refund) SetRefundReason(Reason string) *Refund {
+	r.RefundReason = Reason
+	return r
 }
 
-//设置退款编号
-func (this *Refunnd) SetRefundOutRequestNo(No string) (*Refunnd) {
-	this.OutRequestNo = No
-	return this
+// SetRefundOutRequestNo 设置退款编号
+func (r *Refund) SetRefundOutRequestNo(No string) *Refund {
+	r.OutRequestNo = No
+	return r
 }
 
-//设置操作员id
-func (this *Refunnd) SetOperatorId(id string) (*Refunnd) {
-	this.OperatorId = id
-	return this
+// SetOperatorId 设置操作员id
+func (r *Refund) SetOperatorId(id string) *Refund {
+	r.OperatorId = id
+	return r
 }
 
-//设置店铺id
-func (this *Refunnd) SetStoreId(id string) (*Refunnd) {
-	this.StoreId = id
-	return this
+// SetStoreId 设置店铺id
+func (r *Refund) SetStoreId(id string) *Refund {
+	r.StoreId = id
+	return r
 }
 
-//设置终端id
-func (this *Refunnd) SetTerminalId(id string) (*Refunnd) {
-	this.TerminalId = id
-	return this
+// SetTerminalId 设置终端id
+func (r *Refund) SetTerminalId(id string) *Refund {
+	r.TerminalId = id
+	return r
 }
 
-//设置商品列表
-func (this *Refunnd) SetGoodsDetail(gs []*Goods) (*Refunnd) {
-	this.GoodsDetail = gs
-	return this
+// SetGoodsDetail 设置商品列表
+func (r *Refund) SetGoodsDetail(gs []*Goods) *Refund {
+	r.GoodsDetail = gs
+	return r
 }
 
-//添加商品
-func (this *Refunnd) AddGoodsDetail(g *Goods) (*Refunnd) {
-	if this.GoodsDetail == nil {
-		this.GoodsDetail = make([]*Goods, 8)[0:0]
+// AddGoodsDetail 添加商品
+func (r *Refund) AddGoodsDetail(g *Goods) *Refund {
+	if r.GoodsDetail == nil {
+		r.GoodsDetail = make([]*Goods, 0, 8)
 	}
-	this.GoodsDetail = append(this.GoodsDetail, g)
-	return this
+	r.GoodsDetail = append(r.GoodsDetail, g)
+	return r
 }
-func (this *Client) Refund(re *Refunnd) (*alquest) {
-	return this.newQuest(re, "alipay.trade.refund")
+func (pay *Client) Refund(re *Refund) Request {
+	return pay.newRequest(re, "alipay.trade.refund")
 }
-func (this *Client) RefundParams(re *Refunnd) (map[string]string, error) {
-	url, err := this.Refund(re).Build()
+func (pay *Client) RefundParams(re *Refund) (map[string]string, error) {
+	url, err := pay.Refund(re).Build()
 	if err != nil {
 		return nil, err
 	}
-	return this.httpQuest(url, "alipay_trade_refund_response")
+	return pay.httpDo(url, "alipay_trade_refund_response")
 }
 
-/*查询退款*/
+// QueryRefund 查询退款
 type QueryRefund struct {
-	TradeNo      string `json:"trade_no,omitempty"`     //支付宝交易号，和商户订单号不能同时为空
-	OutTradeNo   string `json:"out_trade_no,omitempty"` //订单支付时传入的商户订单号,和支付宝交易号不能同时为空。 trade_no,out_trade_no如果同时存在优先取trade_no
-	OutRequestNo string `json:"out_request_no"`         //请求退款接口时，传入的退款请求号，如果在退款请求时未传入，则该值为创建交易时的外部交易号
+	TradeNo      string `json:"trade_no,omitempty"`     // 支付宝交易号，和商户订单号不能同时为空
+	OutTradeNo   string `json:"out_trade_no,omitempty"` // 订单支付时传入的商户订单号,和支付宝交易号不能同时为空。 trade_no,out_trade_no如果同时存在优先取trade_no
+	OutRequestNo string `json:"out_request_no"`         // 请求退款接口时，传入的退款请求号，如果在退款请求时未传入，则该值为创建交易时的外部交易号
 }
 
-/*交易退款查询*/
-func NewQueryRefund(OutTradeNo,TradeNo,OutRequestNo string) (*QueryRefund, error) {
+// NewQueryRefund 交易退款查询
+func NewQueryRefund(OutTradeNo, TradeNo, OutRequestNo string) (*QueryRefund, error) {
 	if TradeNo == "" && OutTradeNo == "" {
 		return nil, errors.New("TradeNo和OutTradeNo不能同时为空")
 	}
@@ -129,7 +147,7 @@ func NewQueryRefund(OutTradeNo,TradeNo,OutRequestNo string) (*QueryRefund, error
 	}, nil
 }
 
-//交易退款查询
-func (this *Client) QueryRefund(query *QueryRefund) (*alquest) {
-	return this.newQuest(query, "alipay.trade.fastpay.refund.query")
+// QueryRefund 交易退款查询
+func (pay *Client) QueryRefund(query *QueryRefund) Request {
+	return pay.newRequest(query, "alipay.trade.fastpay.refund.query")
 }
